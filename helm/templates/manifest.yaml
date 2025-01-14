@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: expense
+  labels:
+    app: frontend
+    project: expense
+    tier: web
+spec:
+  replicas: {{ .Values.deployment.replicaset }}
+  selector:
+    matchLabels:
+      app: frontend
+      project: expense
+      tier: web
+  template:
+    metadata:
+      name: nginxfe-pod
+      labels:
+        app: frontend
+        project: expense
+        tier: web
+    spec:
+      containers:
+      - name: frontend
+        image: {{ .Values.deployment.imageURL}}:{{ .Values.deployment.imageVersion}}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 110m
+            memory: 130Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: expense
+spec:
+  type: LoadBalancer
+  selector: 
+    app: frontend
+    project: expense
+    tier: web
+  ports:
+    - name: service-port
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 5      
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: frontend
+  namespace: expense
+spec:
+  serviceRef:
+    name: frontend # route traffic to the awesome-service
+    port: 80
+  targetGroupARN: arn:aws:elasticloadbalancing:us-east-1:614019632196:targetgroup/expense-dev-expense/84c5c3a00ca624d9
+  targetType: ip

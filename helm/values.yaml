@@ -1,0 +1,4 @@
+deployment:
+  imageVersion: IMAGE_VERSION
+  imageURL: 614019632196.dkr.ecr.us-east-1.amazonaws.com/expense/frontend
+  replicaset: 2

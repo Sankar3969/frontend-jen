@@ -1,0 +1,4 @@
+apiVersion: apps/v1
+name: frontend
+version: 1.0.0
+description: this chart is for frontend creation for expense
